@@ -1,248 +1,378 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stealth Paradox- Hide Secrets in Images</title>
+    <title>Stealth Paradox — Hide Secrets in Images</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
- 
+
         :root {
-            --primary: #1a1a2e;
-            --secondary: #16213e;
-            --accent: #0f4c75;
-            --highlight: #3282b8;
-            --text: #eeeeee;
-            --white: #ffffff;
+            --ink:            #0A0B0E;
+            --panel:          #111319;
+            --panel-raised:   #161A22;
+            --line:           #232733;
+            --line-soft:      rgba(255, 255, 255, .05);
+            --text:           #C7CBD6;
+            --text-dim:       #80869A;
+            --text-faint:     #4A4F5C;
+            --white:          #F4F5F7;
+            --conceal:        #27C39E;
+            --conceal-bright: #54E6BF;
+            --reveal:         #D6A347;
+            --reveal-bright:  #F0C26B;
         }
 
         body {
-            font-family: 'Rajdhani', sans-serif;
-            background-color: var(--primary);
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--ink);
             color: var(--text);
-            line-height: 1.6;
+            line-height: 1.65;
             overflow-x: hidden;
         }
 
-        h1, h2, h3, h4, .logo {
-            font-family: 'Orbitron', sans-serif;
-            letter-spacing: 1px;
+        h1, h2, h3, h4 {
+            font-family: 'Space Grotesk', sans-serif;
+            letter-spacing: .01em;
         }
 
+        a, button, input {
+            font-family: inherit;
+        }
+
+        *:focus-visible {
+            outline: 2px solid var(--conceal);
+            outline-offset: 2px;
+        }
+
+        /* ── NAV ── */
         nav {
             position: fixed;
             top: 0;
             width: 100%;
-            background: rgba(26, 26, 46, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 1rem 2rem;
+            background: rgba(10, 11, 14, 0.92);
+            backdrop-filter: blur(16px);
+            padding: 0 2.5rem;
+            height: 62px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            border-bottom: 1px solid var(--line);
         }
 
         .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--highlight);
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: .55rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--white);
+            letter-spacing: .08em;
+        }
+
+        .logo-mark {
+            width: 19px;
+            height: 19px;
+            color: var(--conceal);
+            flex-shrink: 0;
         }
 
         .nav-links {
             display: flex;
-            gap: 2rem;
+            gap: 2.5rem;
             list-style: none;
         }
 
         .nav-links a {
-            color: var(--text);
+            color: var(--text-dim);
             text-decoration: none;
-            transition: color 0.3s;
-            font-weight: 500;
-            font-size: 1.1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .76rem;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            transition: color .2s;
+            position: relative;
+            padding-bottom: 4px;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 0; height: 1px;
+            background: var(--conceal);
+            transition: width .25s;
         }
 
         .nav-links a:hover,
         .nav-links a.active {
-            color: var(--highlight);
+            color: var(--conceal);
+        }
+
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+            width: 100%;
+        }
+
+        .nav-links a[data-page="decode"]:hover,
+        .nav-links a[data-page="decode"].active {
+            color: var(--reveal);
+        }
+
+        .nav-links a[data-page="decode"]:hover::after,
+        .nav-links a[data-page="decode"].active::after {
+            background: var(--reveal);
         }
 
         .hamburger {
             display: none;
             flex-direction: column;
             cursor: pointer;
-            gap: 4px;
+            gap: 5px;
         }
 
         .hamburger span {
-            width: 25px;
-            height: 3px;
-            background: var(--text);
-            border-radius: 3px;
-            transition: 0.3s;
+            width: 22px;
+            height: 2px;
+            background: var(--text-dim);
+            border-radius: 1px;
+            transition: .3s;
         }
 
+        /* ── PAGES ── */
         .page {
             display: none;
-            padding-top: 80px;
+            padding-top: 62px;
         }
 
         .page.active {
             display: block;
         }
 
+        /* ── HERO ── */
         .hero {
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+            background: var(--ink);
             position: relative;
             overflow: hidden;
         }
 
+        /* Tiled binary-data texture — the visual signature of this tool */
         .hero::before {
             content: '';
             position: absolute;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(50,130,184,0.1) 0%, transparent 70%);
-            animation: pulse 15s infinite;
+            inset: -70px;
+            background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='150'%20height='64'%3E%3Ctext%20x='2'%20y='18'%20font-family='monospace'%20font-size='12'%20letter-spacing='2'%20fill='%2327C39E'%20fill-opacity='0.16'%3E01001101%3C/text%3E%3Ctext%20x='14'%20y='46'%20font-family='monospace'%20font-size='12'%20letter-spacing='2'%20fill='%2327C39E'%20fill-opacity='0.10'%3E10110010%3C/text%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 150px 64px;
+            animation: dataDrift 36s linear infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1) rotate(0deg); }
-            50% { transform: scale(1.1) rotate(180deg); }
+        .hero::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 55% 45% at 50% 46%, rgba(10, 11, 14, 0) 0%, rgba(10, 11, 14, .55) 70%, var(--ink) 100%);
+        }
+
+        @keyframes dataDrift {
+            0%   { transform: translate(0, 0); }
+            100% { transform: translate(-150px, -64px); }
         }
 
         .hero-content {
             position: relative;
             z-index: 1;
+            padding: 0 2rem;
         }
 
         .hero h1 {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            animation: fadeInUp 1s;
-            font-weight: 900;
+            font-size: clamp(2rem, 6vw, 4.4rem);
+            margin-bottom: 1.2rem;
+            animation: fadeInUp .9s both;
+            font-weight: 700;
+            letter-spacing: -.01em;
+            color: var(--white);
+        }
+
+        .hero h1 span {
+            color: var(--conceal-bright);
         }
 
         .hero p {
-            font-size: 1.5rem;
-            margin-bottom: 2rem;
-            color: var(--highlight);
-            animation: fadeInUp 1s 0.2s backwards;
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--text-dim);
+            animation: fadeInUp .9s .15s both;
+            letter-spacing: .01em;
+        }
+
+        .hero p:nth-child(3) {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .82rem;
+            letter-spacing: .16em;
+            color: var(--conceal);
+            opacity: .85;
+            margin-bottom: 2.4rem;
+            text-transform: uppercase;
         }
 
         .hero-buttons {
             display: flex;
             gap: 1rem;
             justify-content: center;
-            animation: fadeInUp 1s 0.4s backwards;
-        }
-
-        .btn {
-            padding: 1rem 2.5rem;
-            border: none;
-            border-radius: 50px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-block;
-            font-family: 'Rajdhani', sans-serif;
-        }
-
-        .btn-primary {
-            background: var(--highlight);
-            color: var(--white);
-        }
-
-        .btn-primary:hover {
-            background: var(--accent);
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(50,130,184,0.3);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: var(--text);
-            border: 2px solid var(--highlight);
-        }
-
-        .btn-secondary:hover {
-            background: var(--highlight);
-            color: var(--white);
+            animation: fadeInUp .9s .3s both;
         }
 
         .scroll-indicator {
             position: absolute;
-            bottom: 30px;
+            bottom: 32px;
             left: 50%;
             transform: translateX(-50%);
-            animation: bounce 2s infinite;
-            font-size: 2rem;
-            color: var(--highlight);
+            animation: bounce 2.2s infinite;
+            color: var(--conceal);
+            opacity: .6;
+            z-index: 1;
+            width: 20px;
+            height: 20px;
+        }
+
+        .scroll-indicator svg {
+            width: 100%;
+            height: 100%;
         }
 
         @keyframes bounce {
             0%, 100% { transform: translateX(-50%) translateY(0); }
-            50% { transform: translateX(-50%) translateY(10px); }
+            50%       { transform: translateX(-50%) translateY(8px); }
         }
 
+        /* ── BUTTONS ── */
+        .btn {
+            padding: .85rem 2.2rem;
+            border: none;
+            border-radius: 2px;
+            font-size: .87rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all .25s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: var(--conceal);
+            color: var(--ink);
+        }
+
+        .btn-primary:hover {
+            background: var(--conceal-bright);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(39, 195, 158, .25);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--conceal);
+            border: 1px solid var(--conceal);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(39, 195, 158, .08);
+            transform: translateY(-2px);
+        }
+
+        .btn.nav-link[data-page="decode"] {
+            border-color: var(--reveal);
+            color: var(--reveal-bright);
+        }
+
+        .btn.nav-link[data-page="decode"]:hover {
+            background: rgba(214, 163, 71, .1);
+        }
+
+        /* ── SECTIONS ── */
         .section {
-            padding: 5rem 2rem;
+            padding: 5.5rem 2rem;
             max-width: 1200px;
             margin: 0 auto;
         }
 
         .section-title {
             text-align: center;
-            font-size: 3rem;
+            font-size: clamp(1.6rem, 3vw, 2.5rem);
             margin-bottom: 3rem;
-            color: var(--highlight);
-            font-weight: 700;
+            color: var(--white);
+            font-weight: 600;
+            letter-spacing: .01em;
+            position: relative;
         }
 
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 36px; height: 2px;
+            background: var(--conceal);
+            margin: 14px auto 0;
+        }
+
+        /* ── WHAT IS ── */
         .what-is {
-            background: var(--secondary);
-            text-align: center;
+            background: var(--panel);
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
         }
 
         .what-is p {
-            font-size: 1.2rem;
-            max-width: 800px;
-            margin: 0 auto 2rem;
-            line-height: 1.8;
+            font-size: 1.08rem;
+            max-width: 760px;
+            margin: 0 auto 1.5rem;
+            line-height: 1.85;
+            color: var(--text-dim);
         }
 
+        .what-is p:last-of-type {
+            color: var(--text-dim);
+        }
+
+        .what-is div[style] {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .95rem;
+            color: var(--conceal);
+            letter-spacing: .18em;
+            opacity: .85;
+        }
+
+        /* ── STEPS ── */
         .steps {
-            background: var(--primary);
+            background: var(--ink);
         }
 
         .step {
             display: flex;
             align-items: center;
-            gap: 3rem;
+            gap: 3.5rem;
             margin-bottom: 5rem;
             opacity: 0;
-            transform: translateX(-50px);
-            transition: all 0.8s;
+            transform: translateX(-32px);
+            transition: opacity .7s ease, transform .7s ease;
         }
 
         .step.visible {
@@ -252,7 +382,7 @@
 
         .step:nth-child(even) {
             flex-direction: row-reverse;
-            transform: translateX(50px);
+            transform: translateX(32px);
         }
 
         .step:nth-child(even).visible {
@@ -260,11 +390,13 @@
         }
 
         .step-number {
-            font-size: 5rem;
-            font-weight: bold;
-            color: var(--accent);
+            font-size: 3.2rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
             min-width: 100px;
-            font-family: 'Orbitron', sans-serif;
+            color: var(--conceal);
+            opacity: .16;
+            line-height: 1;
         }
 
         .step-content {
@@ -272,22 +404,42 @@
         }
 
         .step-content h3 {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-            color: var(--highlight);
+            font-size: 1.4rem;
+            margin-bottom: .75rem;
+            color: var(--white);
+            letter-spacing: .01em;
+            font-weight: 600;
         }
 
         .step-content p {
-            font-size: 1.1rem;
-            color: var(--text);
+            font-size: 1rem;
+            color: var(--text-dim);
         }
 
         .step-icon {
-            font-size: 4rem;
+            width: 50px;
+            height: 50px;
+            border: 1px solid var(--line);
+            background: var(--panel-raised);
+            border-radius: 2px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
         }
 
+        .step-icon svg {
+            width: 22px;
+            height: 22px;
+            color: var(--conceal);
+        }
+
+        /* ── DEMO ── */
         .demo {
-            background: var(--secondary);
+            background: var(--panel);
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
             text-align: center;
         }
 
@@ -299,47 +451,68 @@
         }
 
         .demo-box {
-            background: var(--primary);
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: var(--ink);
+            padding: 1.8rem;
+            border-radius: 2px;
+            border: 1px solid var(--line);
         }
 
         .demo-box h4 {
-            color: var(--highlight);
+            color: var(--text-dim);
             margin-bottom: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .76rem;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            font-weight: 400;
         }
 
         .demo-placeholder {
             width: 250px;
             height: 200px;
-            background: var(--accent);
-            border-radius: 10px;
+            background: var(--panel-raised);
+            border-radius: 2px;
+            border: 1px solid var(--line);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 3rem;
+            gap: .6rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .72rem;
+            letter-spacing: .1em;
+            color: var(--text-faint);
         }
 
+        .demo-placeholder svg {
+            width: 34px;
+            height: 34px;
+            color: var(--text-faint);
+            opacity: .8;
+        }
+
+        /* ── FEATURES ── */
         .features {
-            background: var(--primary);
+            background: var(--ink);
         }
 
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
             margin-top: 3rem;
         }
 
         .feature-card {
-            background: var(--secondary);
-            padding: 2rem;
-            border-radius: 15px;
+            background: var(--panel);
+            padding: 2rem 1.8rem;
+            border-radius: 2px;
+            border: 1px solid var(--line);
+            border-top: 2px solid var(--conceal);
             text-align: center;
-            transition: all 0.3s;
+            transition: transform .25s, border-color .25s;
             opacity: 0;
-            transform: translateY(30px);
+            transform: translateY(24px);
         }
 
         .feature-card.visible {
@@ -348,78 +521,140 @@
         }
 
         .feature-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 40px rgba(50,130,184,0.3);
+            transform: translateY(-6px);
+            border-color: rgba(39, 195, 158, .45);
+            box-shadow: 0 12px 32px rgba(39, 195, 158, .08);
         }
 
         .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
+            width: 42px;
+            height: 42px;
+            margin: 0 auto 1.2rem;
+            border: 1px solid var(--line);
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feature-icon svg {
+            width: 20px;
+            height: 20px;
+            color: var(--conceal);
+            opacity: .9;
         }
 
         .feature-card h3 {
-            color: var(--highlight);
-            margin-bottom: 1rem;
+            color: var(--white);
+            margin-bottom: .75rem;
+            font-size: .98rem;
+            letter-spacing: .03em;
+            font-weight: 600;
         }
 
+        .feature-card p {
+            color: var(--text-dim);
+            font-size: .95rem;
+            line-height: 1.6;
+        }
+
+        /* ── CTA ── */
         .cta {
-            background: linear-gradient(135deg, var(--accent) 0%, var(--highlight) 100%);
+            background: var(--panel-raised);
             text-align: center;
-            padding: 5rem 2rem;
+            padding: 6rem 2rem;
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
         }
 
         .cta h2 {
-            font-size: 3rem;
+            font-size: clamp(1.5rem, 3vw, 2.3rem);
             margin-bottom: 2rem;
+            color: var(--white);
+            letter-spacing: .01em;
+            font-weight: 600;
         }
 
         .cta-buttons {
             display: flex;
-            gap: 2rem;
+            gap: 1.2rem;
             justify-content: center;
             flex-wrap: wrap;
         }
 
+        /* ── TOOL PAGES ── */
         .tool-page {
-            min-height: calc(100vh - 80px);
-            padding: 3rem 2rem;
+            min-height: calc(100vh - 62px);
+            padding: 3.5rem 2rem;
             max-width: 800px;
             margin: 0 auto;
         }
 
         .tool-page h1 {
-            color: var(--highlight);
-            margin-bottom: 3rem;
+            color: var(--white);
+            margin-bottom: 2.5rem;
             text-align: center;
-        }
-
-        .step-container {
-            background: var(--secondary);
-            padding: 2rem;
-            border-radius: 15px;
-            margin-bottom: 2rem;
-        }
-
-        .step-header {
-            font-size: 1.5rem;
-            color: var(--highlight);
-            margin-bottom: 1rem;
+            font-size: 1.7rem;
+            letter-spacing: .01em;
             font-weight: 600;
         }
 
+        .step-container {
+            background: var(--panel);
+            padding: 1.8rem 2rem;
+            border-radius: 2px;
+            border: 1px solid var(--line);
+            margin-bottom: 1.2rem;
+        }
+
+        .step-header {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .76rem;
+            letter-spacing: .14em;
+            text-transform: uppercase;
+            color: var(--conceal);
+            margin-bottom: 1rem;
+            opacity: .9;
+        }
+
+        #decode .step-header {
+            color: var(--reveal);
+        }
+
         .file-upload {
-            border: 3px dashed var(--accent);
-            border-radius: 15px;
-            padding: 3rem;
+            border: 1px dashed var(--line);
+            border-radius: 2px;
+            padding: 2.6rem 3rem;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
-            background: var(--primary);
+            transition: border-color .25s, background .25s;
+            background: var(--ink);
+            color: var(--text-dim);
+            font-size: .95rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: .9rem;
+        }
+
+        .file-upload::before {
+            content: '';
+            width: 26px;
+            height: 26px;
+            background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%234A4F5C'%20stroke-width='1.8'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M12%2015V5'/%3E%3Cpath%20d='M7.5%209.5%2012%205l4.5%204.5'/%3E%3Cpath%20d='M4%2017v2a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2v-2'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-size: contain;
         }
 
         .file-upload:hover {
-            border-color: var(--highlight);
-            background: var(--secondary);
+            border-color: var(--conceal);
+            background: rgba(39, 195, 158, .03);
+            color: var(--text);
+        }
+
+        #decode .file-upload:hover {
+            border-color: var(--reveal);
+            background: rgba(214, 163, 71, .03);
         }
 
         .file-upload input {
@@ -428,28 +663,74 @@
 
         .textarea {
             width: 100%;
-            min-height: 150px;
+            min-height: 140px;
             padding: 1rem;
-            border: 2px solid var(--accent);
-            border-radius: 10px;
-            background: var(--primary);
+            border: 1px solid var(--line);
+            border-radius: 2px;
+            background: var(--ink);
             color: var(--text);
-            font-size: 1rem;
+            font-size: .95rem;
             resize: vertical;
-            font-family: 'Rajdhani', sans-serif;
+            font-family: 'Space Grotesk', sans-serif;
+            transition: border-color .2s;
+            outline: none;
+        }
+
+        .textarea:focus {
+            border-color: var(--conceal);
         }
 
         .char-counter {
             text-align: right;
-            margin-top: 0.5rem;
-            color: var(--highlight);
+            margin-top: .5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .76rem;
+            color: var(--text-dim);
+            letter-spacing: .06em;
         }
 
         .action-btn {
             width: 100%;
-            padding: 1.2rem;
-            margin-top: 1rem;
-            font-size: 1.2rem;
+            padding: 1rem;
+            margin-top: .8rem;
+            font-size: .88rem;
+            letter-spacing: .08em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .65rem;
+        }
+
+        .action-btn:disabled {
+            opacity: .35;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .action-btn::before {
+            content: '';
+            width: 17px;
+            height: 17px;
+            background-repeat: no-repeat;
+            background-size: contain;
+            flex-shrink: 0;
+        }
+
+        #encodeBtn::before {
+            background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%230A0B0E'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='5'%20y='11'%20width='14'%20height='9'%20rx='1.5'/%3E%3Cpath%20d='M8%2011V7a4%204%200%200%201%208%200v4'/%3E%3C/svg%3E");
+        }
+
+        #decodeBtn::before {
+            background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%230A0B0E'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M2%2012s3.6-7%2010-7%2010%207%2010%207-3.6%207-10%207-10-7-10-7Z'/%3E%3Ccircle%20cx='12'%20cy='12'%20r='3'/%3E%3C/svg%3E");
+        }
+
+        #downloadBtn::before {
+            background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%2327C39E'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Cpath%20d='M12%204v10'/%3E%3Cpath%20d='M7.5%2010.5%2012%2015l4.5-4.5'/%3E%3Cpath%20d='M4%2017v2a2%202%200%200%200%202%202h12a2%202%200%200%200%202-2v-2'/%3E%3C/svg%3E");
+        }
+
+        #copyBtn::before {
+            background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%23D6A347'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Crect%20x='4'%20y='8'%20width='12'%20height='12'%20rx='1.5'/%3E%3Cpath%20d='M8%208V5.5A1.5%201.5%200%200%201%209.5%204H18a1.5%201.5%200%200%201%201.5%201.5V14a1.5%201.5%200%200%201-1.5%201.5H16'/%3E%3C/svg%3E");
         }
 
         .image-preview {
@@ -459,54 +740,85 @@
 
         .image-preview img {
             max-width: 100%;
-            max-height: 300px;
-            border-radius: 10px;
+            max-height: 280px;
+            border-radius: 2px;
             margin-top: 1rem;
+            border: 1px solid var(--line);
         }
 
         .message-output {
-            background: var(--primary);
-            padding: 1.5rem;
-            border-radius: 10px;
-            border-left: 4px solid var(--highlight);
+            background: var(--ink);
+            padding: 1.4rem;
+            border-radius: 2px;
+            border: 1px solid var(--line);
+            border-left: 3px solid var(--reveal);
             min-height: 100px;
             white-space: pre-wrap;
             word-wrap: break-word;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .88rem;
+            color: var(--text-dim);
+            line-height: 1.7;
         }
 
+        /* ── ABOUT ── */
         .about-section {
-            background: var(--secondary);
-            padding: 3rem;
-            border-radius: 15px;
-            margin-bottom: 3rem;
+            background: var(--panel);
+            padding: 2.4rem;
+            border-radius: 2px;
+            border: 1px solid var(--line);
+            margin-bottom: 1.2rem;
+        }
+
+        .about-section h2 {
+            color: var(--conceal);
+            font-size: .95rem;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            opacity: .9;
+        }
+
+        .about-section p {
+            color: var(--text-dim);
+            font-size: .95rem;
+            line-height: 1.8;
         }
 
         .team-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
         }
 
         .team-card {
-            background: var(--primary);
-            padding: 2rem;
-            border-radius: 15px;
+            background: var(--panel-raised);
+            padding: 2rem 1.6rem;
+            border-radius: 2px;
+            border: 1px solid var(--line);
+            border-top: 2px solid var(--conceal);
             text-align: center;
+            transition: border-color .25s;
+        }
+
+        .team-card:hover {
+            border-color: rgba(39, 195, 158, .4);
         }
 
         .team-photo {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            background: var(--accent);
-            margin: 0 auto 1rem;
+            width: 92px;
+            height: 92px;
+            border-radius: 8px;
+            background: var(--ink);
+            margin: 0 auto 1.2rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 4rem;
             overflow: hidden;
-            border: 4px solid var(--highlight);
+            border: 1px solid var(--line);
         }
 
         .team-photo img {
@@ -517,100 +829,168 @@
         }
 
         .team-name {
-            color: var(--highlight);
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
+            color: var(--white);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            margin-bottom: .4rem;
             font-weight: 700;
+            letter-spacing: .01em;
         }
 
         .team-role {
-            color: var(--text);
+            color: var(--conceal);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .73rem;
+            letter-spacing: .1em;
+            text-transform: uppercase;
             margin-bottom: 1rem;
+            opacity: .85;
         }
 
         .team-links {
             display: flex;
             justify-content: center;
-            gap: 1rem;
+            gap: .8rem;
             flex-wrap: wrap;
         }
 
         .team-links a {
-            color: var(--highlight);
+            color: var(--text-dim);
             text-decoration: none;
+            font-size: .78rem;
+            font-family: 'JetBrains Mono', monospace;
+            transition: color .2s;
             word-break: break-all;
-            font-size: 0.9rem;
+        }
+
+        .team-links a:hover {
+            color: var(--conceal);
         }
 
         .tech-list {
             list-style: none;
-            font-size: 1.1rem;
+            font-size: .95rem;
         }
 
         .tech-list li {
-            padding: 0.5rem 0;
-            padding-left: 2rem;
+            padding: .55rem 0 .55rem 1.8rem;
             position: relative;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--line-soft);
+        }
+
+        .tech-list li:last-child {
+            border-bottom: none;
         }
 
         .tech-list li::before {
-            content: '•';
+            content: '▸';
             position: absolute;
             left: 0;
-            color: var(--highlight);
-            font-size: 1.5rem;
+            color: var(--conceal);
+            font-size: .9rem;
+            opacity: .8;
         }
 
+        /* ── FAQ ── */
         .faq-search {
-            margin-bottom: 3rem;
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+
+        .faq-search::before {
+            content: '';
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            background-image: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2024%2024'%20fill='none'%20stroke='%234A4F5C'%20stroke-width='1.8'%20stroke-linecap='round'%20stroke-linejoin='round'%3E%3Ccircle%20cx='11'%20cy='11'%20r='6.5'/%3E%3Cpath%20d='M20%2020l-4.3-4.3'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-size: contain;
+            pointer-events: none;
         }
 
         .faq-search input {
             width: 100%;
-            padding: 1rem;
-            border: 2px solid var(--accent);
-            border-radius: 10px;
-            background: var(--secondary);
+            padding: .9rem 1rem .9rem 2.7rem;
+            border: 1px solid var(--line);
+            border-radius: 2px;
+            background: var(--panel);
             color: var(--text);
-            font-size: 1rem;
-            font-family: 'Rajdhani', sans-serif;
+            font-size: .95rem;
+            font-family: 'Space Grotesk', sans-serif;
+            outline: none;
+            transition: border-color .2s;
+        }
+
+        .faq-search input:focus {
+            border-color: var(--conceal);
+        }
+
+        .faq-search input::placeholder {
+            color: var(--text-dim);
         }
 
         .faq-category {
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
         }
 
         .faq-category h3 {
-            color: var(--highlight);
-            font-size: 1.8rem;
+            color: var(--white);
+            font-size: .82rem;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: .16em;
+            text-transform: uppercase;
             margin-bottom: 1rem;
-            border-bottom: 2px solid var(--accent);
-            padding-bottom: 0.5rem;
+            padding-bottom: .6rem;
+            border-bottom: 1px solid var(--line);
+            font-weight: 400;
         }
 
         .faq-item {
-            background: var(--secondary);
-            margin-bottom: 1rem;
-            border-radius: 10px;
+            background: var(--panel);
+            margin-bottom: .6rem;
+            border-radius: 2px;
+            border: 1px solid var(--line);
             overflow: hidden;
+            transition: border-color .2s;
+        }
+
+        .faq-item:hover {
+            border-color: rgba(39, 195, 158, .3);
         }
 
         .faq-question {
-            padding: 1.5rem;
+            padding: 1.2rem 1.4rem;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: background 0.3s;
-            font-weight: 600;
+            transition: background .25s;
+            font-size: .95rem;
+            color: var(--text);
         }
 
         .faq-question:hover {
-            background: var(--accent);
+            background: rgba(39, 195, 158, .04);
         }
 
         .faq-icon {
-            transition: transform 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform .3s;
+            color: var(--conceal);
+            opacity: .8;
+            flex-shrink: 0;
+            margin-left: 1rem;
+        }
+
+        .faq-icon svg {
+            width: 14px;
+            height: 14px;
         }
 
         .faq-item.active .faq-icon {
@@ -620,393 +1000,210 @@
         .faq-answer {
             max-height: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            padding: 0 1.5rem;
+            transition: max-height .3s ease-out;
+            padding: 0 1.4rem;
+            font-size: .92rem;
+            color: var(--text-dim);
+            line-height: 1.8;
         }
 
         .faq-item.active .faq-answer {
             max-height: 500px;
-            padding: 0 1.5rem 1.5rem;
+            padding: 0 1.4rem 1.4rem;
         }
 
+        /* ── FOOTER ── */
         footer {
-            background: var(--secondary);
+            background: var(--panel);
             padding: 3rem 2rem;
             text-align: center;
-            border-top: 2px solid var(--accent);
+            border-top: 1px solid var(--line);
+        }
+
+        footer h3 {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--conceal);
+            margin-bottom: 1.2rem;
+            font-size: .95rem;
+            letter-spacing: .12em;
+            opacity: .9;
         }
 
         .footer-links {
             display: flex;
             justify-content: center;
-            gap: 2rem;
+            gap: 2.5rem;
             margin: 1rem 0;
             flex-wrap: wrap;
         }
 
         .footer-links a {
-            color: var(--text);
+            color: var(--text-dim);
             text-decoration: none;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: .73rem;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            transition: color .2s;
         }
 
         .footer-links a:hover {
-            color: var(--highlight);
+            color: var(--conceal);
+        }
+
+        .footer-links a[data-page="decode"]:hover {
+            color: var(--reveal);
         }
 
         .social-links {
             display: flex;
             justify-content: center;
-            gap: 1rem;
+            gap: 1.1rem;
             margin-top: 2rem;
         }
 
         .social-links a {
-            color: var(--highlight);
-            font-size: 1.5rem;
+            color: var(--text-dim);
             text-decoration: none;
+            transition: color .2s;
+            display: inline-flex;
         }
 
+        .social-links a svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .social-links a:hover {
+            color: var(--conceal);
+        }
+
+        footer p {
+            color: var(--text-faint);
+            font-size: .8rem;
+            line-height: 1.8;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ── UTILITIES ── */
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(24px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
         .hidden {
             display: none !important;
         }
 
-        @media (max-width: 768px) {
-            .nav-links {
-                position: fixed;
-                top: 70px;
-                right: -100%;
-                flex-direction: column;
-                background: var(--secondary);
-                width: 100%;
-                padding: 2rem;
-                transition: right 0.3s;
-            }
+        img { max-width: 100%; height: auto; }
 
-            .nav-links.active {
-                right: 0;
-            }
+        .page { overflow-x: hidden; }
 
-            .hamburger {
-                display: flex;
-            }
+        h1, h2, h3, h4, h5, h6, p, span, div {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
 
-            .hero h1 {
-                font-size: 2.5rem;
-            }
-
-            .hero p {
-                font-size: 1.2rem;
-            }
-
-            .hero-buttons {
-                flex-direction: column;
-            }
-
-            .step {
-                flex-direction: column !important;
-                text-align: center;
-            }
-
-            .demo-images {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .cta-buttons {
-                flex-direction: column;
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
+                scroll-behavior: auto !important;
             }
         }
-        /* ADD THESE TO YOUR EXISTING CSS - Replace the @media section at the bottom */
 
-/* Better Mobile Responsiveness */
-@media (max-width: 768px) {
-    /* Navigation fixes */
-    nav {
-        padding: 1rem;
-    }
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            nav { padding: 0 1.2rem; }
 
-    .logo {
-        font-size: 1.2rem;
-    }
+            .logo { font-size: .85rem; }
 
-    .nav-links {
-        position: fixed;
-        top: 60px;
-        right: -100%;
-        flex-direction: column;
-        background: var(--secondary);
-        width: 100%;
-        padding: 2rem;
-        transition: right 0.3s;
-        gap: 1rem;
-    }
+            .nav-links {
+                position: fixed;
+                top: 62px;
+                right: -100%;
+                flex-direction: column;
+                background: var(--panel);
+                width: 100%;
+                padding: 2rem;
+                transition: right .3s;
+                gap: 1.5rem;
+                border-top: 1px solid var(--line);
+            }
 
-    .nav-links.active {
-        right: 0;
-    }
+            .nav-links.active { right: 0; }
 
-    .hamburger {
-        display: flex;
-    }
+            .hamburger { display: flex; }
 
-    /* Hero section fixes */
-    .hero {
-        padding: 2rem 1rem;
-        min-height: 100vh;
-    }
+            .hero { padding: 2rem 1rem; min-height: 100vh; }
 
-    .hero h1 {
-        font-size: 2rem;
-        word-wrap: break-word;
-        line-height: 1.2;
-    }
+            .hero h1 { font-size: 1.7rem; line-height: 1.25; }
 
-    .hero p {
-        font-size: 1rem;
-    }
+            .hero p { font-size: .95rem; }
 
-    .hero-buttons {
-        flex-direction: column;
-        width: 100%;
-    }
+            .hero-buttons { flex-direction: column; width: 100%; max-width: 300px; margin: 0 auto; }
 
-    .btn {
-        width: 100%;
-        padding: 0.8rem 1.5rem;
-        font-size: 1rem;
-    }
+            .btn { width: 100%; padding: .8rem 1.5rem; font-size: .82rem; }
 
-    /* Section padding fixes */
-    .section {
-        padding: 3rem 1rem;
-    }
+            .section { padding: 3.5rem 1.2rem; }
 
-    .section-title {
-        font-size: 2rem;
-        word-wrap: break-word;
-    }
+            .section-title { font-size: 1.45rem; }
 
-    /* Step fixes */
-    .step {
-        flex-direction: column !important;
-        text-align: center;
-        gap: 1.5rem;
-        margin-bottom: 3rem;
-    }
+            .step { flex-direction: column !important; text-align: center; gap: 1.2rem; margin-bottom: 3.5rem; }
 
-    .step-number {
-        font-size: 3rem;
-        min-width: auto;
-    }
+            .step-icon { margin: 0 auto 1rem; }
 
-    .step-content h3 {
-        font-size: 1.5rem;
-    }
+            .step-number { font-size: 2.6rem; min-width: auto; }
 
-    .step-content p {
-        font-size: 1rem;
-    }
+            .step-content h3 { font-size: 1.15rem; }
 
-    /* Demo section fixes */
-    .demo-images {
-        flex-direction: column;
-        align-items: center;
-        gap: 2rem;
-    }
+            .demo-images { flex-direction: column; align-items: center; gap: 1.5rem; }
 
-    .demo-placeholder {
-        width: 100%;
-        max-width: 280px;
-        height: 180px;
-    }
+            .demo-placeholder { width: 100%; max-width: 280px; height: 180px; }
 
-    /* Features grid fixes */
-    .features-grid {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
+            .features-grid { grid-template-columns: 1fr; }
 
-    .feature-card {
-        padding: 1.5rem;
-    }
+            .cta { padding: 4rem 1.2rem; }
 
-    /* CTA section fixes */
-    .cta {
-        padding: 3rem 1rem;
-    }
+            .cta h2 { font-size: 1.35rem; }
 
-    .cta h2 {
-        font-size: 2rem;
-        word-wrap: break-word;
-    }
+            .cta-buttons { flex-direction: column; width: 100%; max-width: 300px; margin: 0 auto; }
 
-    .cta-buttons {
-        flex-direction: column;
-        width: 100%;
-    }
+            .tool-page { padding: 2rem 1.2rem; }
 
-    /* Tool page fixes */
-    .tool-page {
-        padding: 2rem 1rem;
-    }
+            .tool-page h1 { font-size: 1.35rem; }
 
-    .tool-page h1 {
-        font-size: 1.8rem;
-        word-wrap: break-word;
-    }
+            .step-container { padding: 1.4rem; }
 
-    .step-container {
-        padding: 1.5rem;
-    }
+            .file-upload { padding: 2rem 1rem; }
 
-    .step-header {
-        font-size: 1.2rem;
-        word-wrap: break-word;
-    }
+            .team-grid { grid-template-columns: 1fr; }
 
-    .file-upload {
-        padding: 2rem 1rem;
-    }
+            .footer-links { gap: 1.5rem; }
 
-    .textarea {
-        font-size: 0.9rem;
-        min-height: 120px;
-    }
+            .about-section { padding: 1.6rem; }
+        }
 
-    .action-btn {
-        padding: 1rem;
-        font-size: 1rem;
-    }
-
-    /* Team grid fixes */
-    .team-grid {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
-    }
-
-    .team-card {
-        padding: 1.5rem;
-    }
-
-    .team-photo {
-        width: 120px;
-        height: 120px;
-    }
-
-    .team-name {
-        font-size: 1.3rem;
-        word-wrap: break-word;
-    }
-
-    .team-links a {
-        font-size: 0.85rem;
-        word-break: break-all;
-    }
-
-    /* FAQ fixes */
-    .faq-question {
-        padding: 1rem;
-        font-size: 0.95rem;
-    }
-
-    .faq-answer {
-        font-size: 0.9rem;
-    }
-
-    /* Footer fixes */
-    footer {
-        padding: 2rem 1rem;
-    }
-
-    .footer-links {
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    /* Table fixes */
-    .about-section table,
-    .tech-list {
-        font-size: 0.9rem;
-    }
-
-    /* Prevent horizontal scroll */
-    body {
-        overflow-x: hidden;
-    }
-
-    * {
-        max-width: 100%;
-    }
-
-    /* Image preview fixes */
-    .image-preview img {
-        max-width: 100%;
-        height: auto;
-    }
-}
-
-/* Extra small devices */
-@media (max-width: 480px) {
-    .hero h1 {
-        font-size: 1.6rem;
-    }
-
-    .section-title {
-        font-size: 1.6rem;
-    }
-
-    .step-number {
-        font-size: 2.5rem;
-    }
-
-    .feature-icon,
-    .step-icon {
-        font-size: 2.5rem;
-    }
-
-    .demo-placeholder {
-        height: 150px;
-        font-size: 2rem;
-    }
-}
-
-/* Additional global fixes */
-img {
-    max-width: 100%;
-    height: auto;
-}
-
-.page {
-    overflow-x: hidden;
-}
-
-/* Ensure text doesn't overflow */
-h1, h2, h3, h4, h5, h6, p, span, div {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-}
-
-/* Container max-width for better mobile view */
-.section {
-    max-width: 100%;
-    box-sizing: border-box;
-}
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 1.4rem; }
+            .section-title { font-size: 1.3rem; }
+            .step-number { font-size: 2.2rem; }
+        }
     </style>
 </head>
 <body>
     <nav>
-        <div class="logo">STEALTH-PARADOX</div>
+        <div class="logo">
+            <svg class="logo-mark" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2.5" y="2.5" width="19" height="19" rx="2.5" stroke="currentColor" stroke-width="1.6"/>
+                <rect x="7.5" y="7.5" width="3.6" height="3.6" fill="currentColor"/>
+                <rect x="13" y="7.5" width="3.6" height="3.6" stroke="currentColor" stroke-width="1.4"/>
+                <rect x="7.5" y="13" width="3.6" height="3.6" stroke="currentColor" stroke-width="1.4"/>
+                <rect x="13" y="13" width="3.6" height="3.6" stroke="currentColor" stroke-width="1.4"/>
+            </svg>
+            STEALTH PARADOX
+        </div>
         <ul class="nav-links" id="navLinks">
             <li><a href="#" class="nav-link active" data-page="home">Home</a></li>
             <li><a href="#" class="nav-link" data-page="encode">Encode</a></li>
@@ -1024,70 +1221,101 @@ h1, h2, h3, h4, h5, h6, p, span, div {
     <div id="home" class="page active">
         <section class="hero">
             <div class="hero-content">
-                <h1>STEALTH🔒PARADOX</h1>
+                <h1>STEALTH <span>PARADOX</span></h1>
                 <p>Hide Secret Messages Inside Images</p>
-                <p style="font-size: 1.1rem;">Safe • Private • Browser-Based</p>
+                <p style="font-size: 1.1rem;">Safe &nbsp;·&nbsp; Private &nbsp;·&nbsp; Browser-Based</p>
                 <div class="hero-buttons">
                     <a href="#" class="btn btn-primary nav-link" data-page="encode">Get Started</a>
-                    <button class="btn btn-secondary" onclick="document.querySelector('.what-is').scrollIntoView({behavior: 'smooth'})">Learn How It Works ↓</button>
+                    <button class="btn btn-secondary" onclick="document.querySelector('.what-is').scrollIntoView({behavior: 'smooth'})">How It Works &darr;</button>
                 </div>
             </div>
-            <div class="scroll-indicator">↓</div>
+            <div class="scroll-indicator">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 9l6 6 6-6"/>
+                </svg>
+            </div>
         </section>
 
         <section class="section what-is">
             <h2 class="section-title">What is Steganography?</h2>
             <p>Steganography is the art of hiding secret information inside ordinary files.</p>
-            <p>Unlike encryption which scrambles data, steganography hides it in plain sight.</p>
-            <div style="margin-top: 2rem; font-size: 3rem;">📷 → 🔒 → ✉️</div>
-            <p style="margin-top: 1rem; color: var(--highlight);">Looks Normal • Contains Secrets</p>
+            <p>Unlike encryption which scrambles data, steganography conceals the very existence of a message — hiding it in plain sight within the pixel structure of an image.</p>
+            <div style="margin-top: 2rem; font-size: 1rem; letter-spacing: .3em; text-transform: uppercase;">IMAGE &nbsp; &rarr; &nbsp; ENCODE &nbsp; &rarr; &nbsp; CONCEALED</div>
+            <p style="margin-top: 1rem; color: var(--conceal); font-family: 'JetBrains Mono', monospace; font-size: .82rem; letter-spacing: .16em;">Looks Normal &nbsp;·&nbsp; Contains Secrets</p>
         </section>
 
         <section class="section steps">
             <h2 class="section-title">How Does It Work?</h2>
-            
+
             <div class="step">
                 <div class="step-number">1</div>
                 <div class="step-content">
-                    <div class="step-icon">📤</div>
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 15V5"/>
+                            <path d="M7.5 9.5 12 5l4.5 4.5"/>
+                            <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+                        </svg>
+                    </div>
                     <h3>Upload Image</h3>
-                    <p>Choose any PNG image from your device. The image will be your secret carrier.</p>
+                    <p>Choose any PNG image from your device. The image will serve as the carrier for your hidden message.</p>
                 </div>
             </div>
 
             <div class="step">
                 <div class="step-number">2</div>
                 <div class="step-content">
-                    <div class="step-icon">✍️</div>
-                    <h3>Hide Message</h3>
-                    <p>Type your secret text. The message gets hidden in the image pixels using LSB technique.</p>
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 20h4l10.5-10.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 16v4Z"/>
+                            <path d="M13.5 6.5l3 3"/>
+                        </svg>
+                    </div>
+                    <h3>Write Your Message</h3>
+                    <p>Type your secret text. The message is embedded into the image pixels using the LSB technique — invisible to any observer.</p>
                 </div>
             </div>
 
             <div class="step">
                 <div class="step-number">3</div>
                 <div class="step-content">
-                    <div class="step-icon">🔐</div>
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="5" y="11" width="14" height="9" rx="1.5"/>
+                            <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+                        </svg>
+                    </div>
                     <h3>Encode</h3>
-                    <p>Our tool modifies the least significant bits of pixels - invisible to the human eye!</p>
+                    <p>The tool modifies the least significant bits of pixel RGB values — changes imperceptible to the human eye.</p>
                 </div>
             </div>
 
             <div class="step">
                 <div class="step-number">4</div>
                 <div class="step-content">
-                    <div class="step-icon">⬇️</div>
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 4v10"/>
+                            <path d="M7.5 10.5 12 15l4.5-4.5"/>
+                            <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/>
+                        </svg>
+                    </div>
                     <h3>Download</h3>
-                    <p>Get your encoded image. Share it anywhere - email, social media, messaging apps!</p>
+                    <p>Download your encoded image. Share it anywhere — email, messaging apps, or cloud storage.</p>
                 </div>
             </div>
 
             <div class="step">
                 <div class="step-number">5</div>
                 <div class="step-content">
-                    <div class="step-icon">🔓</div>
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </div>
                     <h3>Decode</h3>
-                    <p>The receiver uploads the image and extracts the hidden message. Secret revealed!</p>
+                    <p>The recipient uploads the image and extracts the hidden message. The secret is revealed only with this tool.</p>
                 </div>
             </div>
         </section>
@@ -1097,190 +1325,233 @@ h1, h2, h3, h4, h5, h6, p, span, div {
             <div class="demo-images">
                 <div class="demo-box">
                     <h4>Original Image</h4>
-                    <div class="demo-placeholder">🖼️</div>
+                    <div class="demo-placeholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="16" rx="1.5"/>
+                            <circle cx="8.5" cy="9.5" r="1.6"/>
+                            <path d="M21 16l-5.5-5.5a1.7 1.7 0 0 0-2.4 0L4 19"/>
+                        </svg>
+                    </div>
                 </div>
                 <div class="demo-box">
                     <h4>Encoded Image</h4>
-                    <div class="demo-placeholder">🖼️</div>
+                    <div class="demo-placeholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="16" rx="1.5"/>
+                            <circle cx="8.5" cy="9.5" r="1.6"/>
+                            <path d="M21 16l-5.5-5.5a1.7 1.7 0 0 0-2.4 0L4 19"/>
+                        </svg>
+                    </div>
                 </div>
             </div>
-            <p style="font-size: 1.3rem; margin-top: 2rem;">These images look <strong>IDENTICAL</strong></p>
-            <p style="color: var(--highlight); font-size: 1.2rem;">But one contains a hidden message! 🤫</p>
-            <a href="#" class="btn btn-primary nav-link" data-page="encode" style="margin-top: 2rem;">Try It Yourself →</a>
+            <p style="font-size: 1.15rem; margin-top: 2rem; color: var(--white);">These images appear <strong>IDENTICAL</strong></p>
+            <p style="color: var(--conceal); font-size: .88rem; font-family: 'JetBrains Mono', monospace; letter-spacing: .1em; margin-top: .6rem;">One contains a hidden message.</p>
+            <a href="#" class="btn btn-primary nav-link" data-page="encode" style="margin-top: 2rem; display: inline-block;">Try It Yourself &rarr;</a>
         </section>
 
         <section class="section features">
             <h2 class="section-title">Key Features</h2>
             <div class="features-grid">
                 <div class="feature-card">
-                    <div class="feature-icon">🔒</div>
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 3l8 3.5v5c0 5-3.5 8.2-8 9.5-4.5-1.3-8-4.5-8-9.5v-5L12 3Z"/>
+                            <path d="M9 12l2 2 4-4.5"/>
+                        </svg>
+                    </div>
                     <h3>Secure</h3>
-                    <p>Everything happens in your browser. No data sent to servers.</p>
+                    <p>Everything is processed in your browser. No data is ever transmitted to external servers.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M13 3 5 13h6l-1 8 8-10h-6l1-8Z"/>
+                        </svg>
+                    </div>
                     <h3>Fast</h3>
-                    <p>Instant encoding & decoding in seconds.</p>
+                    <p>Instant encoding and decoding. No uploads, no queues, no waiting.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🌐</div>
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="7" y="7" width="10" height="10" rx="1"/>
+                            <path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/>
+                        </svg>
+                    </div>
                     <h3>No Server</h3>
-                    <p>All processing happens locally in your browser.</p>
+                    <p>All processing happens entirely client-side within your browser environment.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">📱</div>
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="13" height="9" rx="1"/>
+                            <rect x="14" y="15" width="7" height="6" rx="1"/>
+                            <path d="M3 17h9"/>
+                        </svg>
+                    </div>
                     <h3>Responsive</h3>
-                    <p>Works on any device - phone, tablet, or PC.</p>
+                    <p>Designed to work on any device — desktop, tablet, or mobile.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🆓</div>
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 11.5 11.5 3H17a4 4 0 0 1 4 4v5.5L12.5 21 3 11.5Z"/>
+                            <circle cx="13" cy="9" r="1.4" fill="currentColor" stroke="none"/>
+                        </svg>
+                    </div>
                     <h3>Free</h3>
-                    <p>No sign-up. No payment required.</p>
+                    <p>No account required. No payment. Open access, always.</p>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🎨</div>
-                    <h3>Easy</h3>
-                    <p>Simple interface anyone can use.</p>
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9"/>
+                            <path d="M8 12.5l3 3 5.5-6.5"/>
+                        </svg>
+                    </div>
+                    <h3>Simple</h3>
+                    <p>A clean, step-by-step interface accessible to any user.</p>
                 </div>
             </div>
         </section>
 
         <section class="cta">
-            <h2>Ready to Hide Your Secrets?</h2>
+            <h2>Ready to Conceal Your Message?</h2>
             <div class="cta-buttons">
                 <a href="#" class="btn btn-primary nav-link" data-page="encode">Encode Message</a>
                 <a href="#" class="btn btn-secondary nav-link" data-page="decode">Decode Message</a>
             </div>
-            <p style="margin-top: 2rem; font-size: 1.1rem;">100% Free • No Registration</p>
+            <p style="margin-top: 2rem; font-family: 'JetBrains Mono', monospace; font-size: .78rem; letter-spacing: .12em; color: var(--text-dim);">100% FREE &nbsp;·&nbsp; NO REGISTRATION</p>
         </section>
     </div>
 
     <div id="encode" class="page">
         <div class="tool-page">
-            <h1>🔒 Encode Message</h1>
-            
+            <h1>Encode Message</h1>
+
             <div class="step-container">
-                <div class="step-header">Step 1: Upload Your Image</div>
+                <div class="step-header">Step 01 &mdash; Upload Your Image</div>
                 <div class="file-upload" id="encodeUpload">
                     <input type="file" id="encodeFile" accept=".png">
-                    <div>📁 Click or Drag & Drop</div>
-                    <div style="margin-top: 0.5rem; color: var(--highlight);">(PNG format only)</div>
+                    <div>Click or drag &amp; drop a PNG file</div>
+                    <div style="margin-top: .5rem; font-family: 'JetBrains Mono', monospace; font-size: .75rem; letter-spacing: .1em; color: var(--conceal); opacity: .8;">PNG format only</div>
                 </div>
                 <div id="encodePreview" class="image-preview hidden"></div>
             </div>
 
             <div class="step-container">
-                <div class="step-header">Step 2: Enter Your Secret Message</div>
+                <div class="step-header">Step 02 &mdash; Enter Your Message</div>
                 <textarea class="textarea" id="messageInput" placeholder="Type your secret message here..." maxlength="500"></textarea>
-                <div class="char-counter"><span id="charCount">0</span>/500 characters</div>
+                <div class="char-counter"><span id="charCount">0</span> / 500</div>
             </div>
 
             <div class="step-container">
-                <div class="step-header">Step 3: Encode & Download</div>
-                <button class="btn btn-primary action-btn" id="encodeBtn" disabled>🔒 Hide Message in Image</button>
-                <button class="btn btn-secondary action-btn hidden" id="downloadBtn">⬇️ Download Encoded Image</button>
+                <div class="step-header">Step 03 &mdash; Encode &amp; Download</div>
+                <button class="btn btn-primary action-btn" id="encodeBtn" disabled>Hide Message in Image</button>
+                <button class="btn btn-secondary action-btn hidden" id="downloadBtn">Download Encoded Image</button>
             </div>
         </div>
     </div>
 
     <div id="decode" class="page">
         <div class="tool-page">
-            <h1>🔓 Decode Message</h1>
-            
+            <h1>Decode Message</h1>
+
             <div class="step-container">
-                <div class="step-header">Step 1: Upload Encoded Image</div>
+                <div class="step-header">Step 01 &mdash; Upload Encoded Image</div>
                 <div class="file-upload" id="decodeUpload">
                     <input type="file" id="decodeFile" accept=".png">
-                    <div>📁 Click or Drag & Drop</div>
-                    <div style="margin-top: 0.5rem; color: var(--highlight);">(Must be PNG format)</div>
+                    <div>Click or drag &amp; drop the encoded PNG</div>
+                    <div style="margin-top: .5rem; font-family: 'JetBrains Mono', monospace; font-size: .75rem; letter-spacing: .1em; color: var(--reveal); opacity: .85;">Must be PNG format</div>
                 </div>
                 <div id="decodePreview" class="image-preview hidden"></div>
             </div>
 
             <div class="step-container">
-                <div class="step-header">Step 2: Extract Hidden Message</div>
-                <button class="btn btn-primary action-btn" id="decodeBtn" disabled>🔍 Extract Message</button>
+                <div class="step-header">Step 02 &mdash; Extract Message</div>
+                <button class="btn btn-primary action-btn" id="decodeBtn" disabled>Extract Hidden Message</button>
             </div>
 
             <div class="step-container">
-                <div class="step-header">Hidden Message:</div>
-                <div class="message-output" id="messageOutput">Message will appear here...</div>
-                <button class="btn btn-secondary action-btn hidden" id="copyBtn">📋 Copy to Clipboard</button>
+                <div class="step-header">Result</div>
+                <div class="message-output" id="messageOutput">Extracted message will appear here...</div>
+                <button class="btn btn-secondary action-btn hidden" id="copyBtn">Copy to Clipboard</button>
             </div>
         </div>
     </div>
 
     <div id="about" class="page">
         <div class="tool-page" style="max-width: 1200px;">
-            <h1>About Us</h1>
-            
+            <h1>About</h1>
+
             <div class="about-section">
-                <h2 style="color: var(--highlight); margin-bottom: 1rem;">About This Project</h2>
+                <h2>About This Project</h2>
                 <p>This steganography tool was created as part of our <strong>Information and Communication Technologies lab project.</strong> Our goal is to demonstrate how information can be hidden in plain sight using modern web technologies and steganography techniques.</p>
             </div>
-            
+
             <div class="about-section">
-                <h2 style="color: var(--highlight); margin-bottom: 1rem;">Technologies Used</h2>
+                <h2>Technologies Used</h2>
                 <ul class="tech-list">
-                    <li>HTML5 - Structure and semantic markup</li>
-                    <li>CSS3 - Styling and animations</li>
-                    <li>JavaScript - Logic and functionality</li>
-                    <li>Canvas API - Image processing and manipulation</li>
-                    <li>LSB Algorithm - Least Significant Bit steganography technique</li>
+                    <li>HTML5 — Structure and semantic markup</li>
+                    <li>CSS3 — Styling and animations</li>
+                    <li>JavaScript — Core logic and functionality</li>
+                    <li>Canvas API — Image processing and pixel manipulation</li>
+                    <li>LSB Algorithm — Least Significant Bit steganography technique</li>
                 </ul>
             </div>
 
             <div class="about-section">
-                <h2 style="color: var(--highlight); margin-bottom: 1rem;">Meet The Team</h2>
+                <h2>Meet The Team</h2>
                 <div class="team-grid">
                     <div class="team-card">
-                        <div class="team-photo"><img src="saim_new.png" alt="saim"></div>
-                        <div class="team-name">M.SAIM</div>
+                        <div class="team-photo"><img src="team/saim_new.png" alt="M. Saim"></div>
+                        <div class="team-name">M. SAIM</div>
                         <div class="team-role">Lead Developer</div>
                         <div class="team-links">
-                            <a href="#">📧2500703@students.au.edu.pk</a>
+                            <a href="#">2500703@students.au.edu.pk</a>
                         </div>
                     </div>
                     <div class="team-card">
-                        <div class="team-photo"><img src="isra_new.png" alt="isra"></div>
+                        <div class="team-photo"><img src="team/isra_new.png" alt="Isra Batool"></div>
                         <div class="team-name">ISRA BATOOL</div>
                         <div class="team-role">UI/UX Designer</div>
                         <div class="team-links">
-                            <a href="#">📧2500715@students.au.edu.pk</a>
+                            <a href="#">2500715@students.au.edu.pk</a>
                         </div>
                     </div>
                     <div class="team-card">
-                        <div class="team-photo"><img src="musa.jpg" alt="musa"></div>
+                        <div class="team-photo"><img src="team/musa.jpg" alt="Musa Madni"></div>
                         <div class="team-name">MUSA MADNI</div>
-                        <div class="team-role">Documentation and Testing</div>
+                        <div class="team-role">Documentation &amp; Testing</div>
                         <div class="team-links">
-                            <a href="#">📧2500695@studnts.au.edu.pk</a>
+                            <a href="#">2500695@students.au.edu.pk</a>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="about-section">
-                <h2 style="color: var(--highlight); margin-bottom: 1rem;">Acknowledgments</h2>
+                <h2>Acknowledgments</h2>
                 <p>Special thanks to our lab instructors for their guidance and support throughout this project. This tool demonstrates the practical applications of cybersecurity concepts in web development.</p>
             </div>
         </div>
     </div>
+
     <div id="faq" class="page">
         <div class="tool-page" style="max-width: 1200px;">
             <h1>Frequently Asked Questions</h1>
-            
+
             <div class="faq-search">
-                <input type="text" id="faqSearch" placeholder="🔍 Search FAQs...">
+                <input type="text" id="faqSearch" placeholder="Search FAQs...">
             </div>
 
             <div class="faq-category">
-                <h3>General Questions</h3>
-                
+                <h3>General</h3>
+
                 <div class="faq-item">
                     <div class="faq-question">
                         <span>What is steganography?</span>
-                        <span class="faq-icon">▼</span>
+                        <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
                     </div>
                     <div class="faq-answer">
                         Steganography is the art of hiding secret messages inside ordinary files like images, audio, or video. Unlike encryption which scrambles data, steganography conceals the existence of the message itself, making it invisible to casual observers.
@@ -1290,112 +1561,112 @@ h1, h2, h3, h4, h5, h6, p, span, div {
                 <div class="faq-item">
                     <div class="faq-question">
                         <span>How does this tool work?</span>
-                        <span class="faq-icon">▼</span>
+                        <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
                     </div>
                     <div class="faq-answer">
-                        Our tool uses the LSB (Least Significant Bit) technique. It modifies the least significant bits of pixel RGB values to hide your message. These tiny changes are invisible to the human eye but can be extracted later to reveal the hidden text.
+                        Our tool uses the LSB (Least Significant Bit) technique. It modifies the least significant bits of pixel RGB values to store your message. These tiny changes are invisible to the human eye but can be extracted later to reveal the hidden text.
                     </div>
                 </div>
 
                 <div class="faq-item">
                     <div class="faq-question">
                         <span>Is my data safe?</span>
-                        <span class="faq-icon">▼</span>
+                        <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
                     </div>
                     <div class="faq-answer">
-                        Yes! All processing happens entirely in your browser using JavaScript. No images or messages are ever sent to any server. Your data never leaves your device, ensuring complete privacy and security.
+                        Yes. All processing happens entirely in your browser using JavaScript. No images or messages are ever sent to any server. Your data never leaves your device, ensuring complete privacy.
                     </div>
                 </div>
             </div>
 
             <div class="faq-category">
-                <h3>Technical Questions</h3>
-                
+                <h3>Technical</h3>
+
                 <div class="faq-item">
                     <div class="faq-question">
                         <span>What image formats are supported?</span>
-                        <span class="faq-icon">▼</span>
+                        <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
                     </div>
                     <div class="faq-answer">
-                        Only PNG format is supported. PNG is a lossless format, meaning pixel data remains unchanged after saving. This is crucial for steganography as any compression would destroy the hidden message.
+                        Only PNG format is supported. PNG is a lossless format, meaning pixel data remains unchanged after saving. This is crucial for steganography — any lossy compression would corrupt the hidden message.
                     </div>
                 </div>
 
                 <div class="faq-item">
                     <div class="faq-question">
                         <span>What is the maximum message length?</span>
-                        <span class="faq-icon">▼</span>
+                        <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
                     </div>
                     <div class="faq-answer">
-                        The maximum message length is currently set to 500 characters. However, this also depends on your image size. A larger image can theoretically hold more data. Generally, a 1920×1080 image can comfortably hide 500-800 characters.
+                        The current limit is 500 characters. This also depends on image dimensions — a larger image can accommodate more data. A standard 1920×1080 PNG can comfortably hold 500–800 characters.
                     </div>
                 </div>
 
                 <div class="faq-item">
                     <div class="faq-question">
                         <span>Can I use JPEG images?</span>
-                        <span class="faq-icon">▼</span>
+                        <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
                     </div>
                     <div class="faq-answer">
-                        No, JPEG uses lossy compression which modifies pixel values during the save process. This would destroy any hidden messages. You must always use PNG format for both encoding and decoding.
+                        No. JPEG uses lossy compression which alters pixel values during the save process, destroying any hidden messages. You must use PNG format for both encoding and decoding.
                     </div>
                 </div>
 
                 <div class="faq-item">
                     <div class="faq-question">
                         <span>How do I decode a message?</span>
-                        <span class="faq-icon">▼</span>
+                        <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
                     </div>
                     <div class="faq-answer">
-                        Go to the Decode page, upload the encoded PNG image (the one you downloaded after encoding), and click "Extract Message". The hidden text will appear in the output box. You can then copy it to your clipboard.
+                        Go to the Decode page, upload the encoded PNG file you received, and click Extract Message. The hidden text will appear in the output panel and can be copied to your clipboard.
                     </div>
                 </div>
             </div>
 
             <div class="faq-category">
                 <h3>Troubleshooting</h3>
-                
+
                 <div class="faq-item">
                     <div class="faq-question">
                         <span>Why can't I extract the message?</span>
-                        <span class="faq-icon">▼</span>
+                        <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
                     </div>
                     <div class="faq-answer">
-                        Make sure you're using the exact PNG image that was downloaded after encoding. If the image was converted to JPEG, edited, or compressed, the hidden message will be lost. Also ensure you're using the same tool for both encoding and decoding.
+                        Ensure you are using the exact PNG file downloaded after encoding. If the image was converted to JPEG, re-saved, edited, or compressed at any point, the hidden data will be lost. Always preserve the original downloaded file.
                     </div>
                 </div>
 
                 <div class="faq-item">
                     <div class="faq-question">
                         <span>The image is too large. What should I do?</span>
-                        <span class="faq-icon">▼</span>
+                        <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
                     </div>
                     <div class="faq-answer">
-                        Try using a smaller image or resize your image before encoding. For web use, images around 1920×1080 pixels work well. Remember to keep it in PNG format when resizing.
+                        Use a smaller or resized image. For most use cases, images around 1920×1080 work well. Always ensure the resized file is saved in PNG format before encoding.
                     </div>
                 </div>
 
                 <div class="faq-item">
                     <div class="faq-question">
-                        <span>My browser shows an error</span>
-                        <span class="faq-icon">▼</span>
+                        <span>My browser shows an error.</span>
+                        <span class="faq-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
                     </div>
                     <div class="faq-answer">
-                        Make sure you're using a modern browser (Chrome, Firefox, Edge, or Safari). Clear your browser cache and try again. If the problem persists, try using a different browser.
+                        Ensure you are using a modern browser — Chrome, Firefox, Edge, or Safari are all supported. Clear your browser cache and retry. If the issue persists, try a different browser.
                     </div>
                 </div>
             </div>
 
-            <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: var(--secondary); border-radius: 15px;">
-                <h3 style="color: var(--highlight); margin-bottom: 1rem;">Still have questions?</h3>
-                <p>Feel free to contact our team for any additional support or inquiries.</p>
+            <div style="text-align: center; margin-top: 3rem; padding: 2rem; background: var(--panel); border-radius: 2px; border: 1px solid var(--line);">
+                <h3 style="color: var(--conceal); margin-bottom: 1rem; font-size: .88rem; letter-spacing: .1em; font-family: 'JetBrains Mono', monospace; font-weight: 400;">Still have questions?</h3>
+                <p style="color: var(--text-dim); font-size: .9rem;">Contact our team for any additional support or inquiries.</p>
             </div>
         </div>
     </div>
 
     <footer>
-        <h3 style="color: var(--highlight); margin-bottom: 1rem;">🔒STEALTH-PARADOX🔒</h3>
-        
+        <h3>STEALTH PARADOX</h3>
+
         <div class="footer-links">
             <a href="#" class="nav-link" data-page="home">Home</a>
             <a href="#" class="nav-link" data-page="encode">Encode</a>
@@ -1404,19 +1675,18 @@ h1, h2, h3, h4, h5, h6, p, span, div {
             <a href="#" class="nav-link" data-page="faq">FAQ</a>
         </div>
 
-        <p style="margin-top: 2rem; font-size: 0.9rem;">
-            <strong>Privacy:</strong> All processing is browser-based. No data is collected or stored.
+        <p style="margin-top: 2rem;">
+            Privacy: All processing is browser-based. No data is collected or stored.
         </p>
 
-        <p style="margin-top: 1rem;">
-            Built with HTML, CSS & JavaScript<br>
-            2025 -ICT Lab Project
+        <p style="margin-top: .6rem;">
+            Built with HTML, CSS &amp; JavaScript &nbsp;&mdash;&nbsp; 2025 ICT Lab Project
         </p>
 
         <div class="social-links">
-            <a href="#">🔗</a>
-            <a href="#">💼</a>
-            <a href="#">📧</a>
+            <a href="#" aria-label="Link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 14.5l5-5"/><path d="M11 7.5l1.2-1.2a3.2 3.2 0 0 1 4.5 4.5L15.5 12"/><path d="M13 16.5l-1.2 1.2a3.2 3.2 0 0 1-4.5-4.5L8.5 12"/></svg></a>
+            <a href="#" aria-label="Portfolio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="11" rx="1.5"/><path d="M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 13h18"/></svg></a>
+            <a href="#" aria-label="Email"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M4 7l8 6 8-6"/></svg></a>
         </div>
     </footer>
 
@@ -1431,13 +1701,13 @@ h1, h2, h3, h4, h5, h6, p, span, div {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
                 const targetPage = this.getAttribute('data-page');
-                
+
                 pages.forEach(page => page.classList.remove('active'));
                 navLinks.forEach(link => link.classList.remove('active'));
-                
+
                 document.getElementById(targetPage).classList.add('active');
                 this.classList.add('active');
-                
+
                 window.scrollTo(0, 0);
                 navLinksContainer.classList.remove('active');
             });
@@ -1516,16 +1786,16 @@ h1, h2, h3, h4, h5, h6, p, span, div {
             const ctx = canvas.getContext('2d');
             canvas.width = encodeImage.width;
             canvas.height = encodeImage.height;
-            
+
             ctx.drawImage(encodeImage, 0, 0);
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
 
             // Convert message to binary
-            const messageBinary = message.split('').map(char => 
+            const messageBinary = message.split('').map(char =>
                 char.charCodeAt(0).toString(2).padStart(8, '0')
             ).join('');
-            
+
             // Add delimiter
             const fullMessage = messageBinary + '11111111111111111111111111111111';
 
@@ -1535,7 +1805,7 @@ h1, h2, h3, h4, h5, h6, p, span, div {
             }
 
             ctx.putImageData(imageData, 0, 0);
-            
+
             canvas.toBlob(function(blob) {
                 const url = URL.createObjectURL(blob);
                 downloadBtn.onclick = function() {
@@ -1545,7 +1815,7 @@ h1, h2, h3, h4, h5, h6, p, span, div {
                     a.click();
                 };
                 downloadBtn.classList.remove('hidden');
-                alert('✅ Message encoded successfully! Click download button below.');
+                alert('Message encoded successfully. Click the download button below.');
             }, 'image/png');
         });
 
@@ -1586,7 +1856,7 @@ h1, h2, h3, h4, h5, h6, p, span, div {
             const ctx = canvas.getContext('2d');
             canvas.width = decodeImage.width;
             canvas.height = decodeImage.height;
-            
+
             ctx.drawImage(decodeImage, 0, 0);
             const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imageData.data;
@@ -1599,15 +1869,15 @@ h1, h2, h3, h4, h5, h6, p, span, div {
             // Find delimiter
             const delimiter = '11111111111111111111111111111111';
             const endIndex = binary.indexOf(delimiter);
-            
+
             if (endIndex === -1) {
-                messageOutput.textContent = '❌ No hidden message found in this image.';
+                messageOutput.textContent = 'No hidden message found in this image.';
                 return;
             }
 
             const messageBinary = binary.substring(0, endIndex);
             let message = '';
-            
+
             for (let i = 0; i < messageBinary.length; i += 8) {
                 const byte = messageBinary.substr(i, 8);
                 message += String.fromCharCode(parseInt(byte, 2));
@@ -1621,7 +1891,7 @@ h1, h2, h3, h4, h5, h6, p, span, div {
             const text = messageOutput.textContent;
             navigator.clipboard.writeText(text).then(() => {
                 const originalText = copyBtn.textContent;
-                copyBtn.textContent = '✓ Copied!';
+                copyBtn.textContent = 'Copied!';
                 setTimeout(() => {
                     copyBtn.textContent = originalText;
                 }, 2000);
@@ -1645,7 +1915,7 @@ h1, h2, h3, h4, h5, h6, p, span, div {
                 faqItems.forEach(item => {
                     const question = item.querySelector('.faq-question span').textContent.toLowerCase();
                     const answer = item.querySelector('.faq-answer').textContent.toLowerCase();
-                    
+
                     if (question.includes(searchTerm) || answer.includes(searchTerm)) {
                         item.style.display = 'block';
                     } else {
@@ -1657,8 +1927,3 @@ h1, h2, h3, h4, h5, h6, p, span, div {
     </script>
 </body>
 </html>
-
-
-```
-
-
